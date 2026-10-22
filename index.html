@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disaster Response & Resource Coordination Portal</title>
+    <link href="https://cloudflare.com" rel="stylesheet">
+    <style>
+        .critical-alert { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { background-color: #ef4444; }
+            50% { background-color: #991b1b; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans antialiased">
+
+    <!-- Top Header Navigation -->
+    <header class="bg-gray-800 border-b border-gray-700 p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-red-500 tracking-wide flex items-center gap-2">
+                <span>⚠️</span> District Disaster Management Portal
+            </h1>
+            <div id="live-clock" class="text-sm font-mono text-gray-400 bg-gray-900 px-3 py-1 rounded border border-gray-700"></div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 space-y-6">
+
+        <!-- CRITICAL ALERTS CONTAINER -->
+        <div id="alert-banner-zone" class="hidden space-y-2"></div>
+
+        <!-- STATS & ANALYTICS OVERVIEW -->
+        <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <p class="text-gray-400 text-sm font-medium">Open Incidents</p>
+                <p id="stat-open" class="text-3xl font-bold text-yellow-500">0</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <p class="text-gray-400 text-sm font-medium">Resolved Incidents</p>
+                <p id="stat-resolved" class="text-3xl font-bold text-green-500">0</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <p class="text-gray-400 text-sm font-medium">Available Rescue Teams</p>
+                <p id="stat-teams" class="text-3xl font-bold text-blue-400">0</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <p class="text-gray-400 text-sm font-medium">Supplies Awaiting Replenishment</p>
+                <p id="stat-replenish" class="text-3xl font-bold text-red-400">0</p>
+            </div>
+        </section>
+
+        <!-- HIGHEST PRIORITY DISPATCH HUB -->
+        <section id="priority-hub" class="bg-gradient-to-r from-red-950 to-gray-800 p-6 rounded-lg border border-red-700 shadow-xl hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <span class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold uppercase tracking-widest animate-bounce inline-block mb-2">CRITICAL DISPATCH</span>
+                    <h2 class="text-xl font-bold text-white" id="hp-location">Location: Loading...</h2>
+                    <p class="text-gray-300 text-sm mt-1" id="hp-details"></p>
+                </div>
+                <div class="bg-gray-900 bg-opacity-60 p-4 rounded border border-red-500 min-w-[250px]">
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Resource Allocation State</p>
+                    <div id="hp-resource-status" class="mt-2 text-sm font-mono text-yellow-400">Checking parameters...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TWO COLUMN LAYOUT: INCIDENTS & EVACUATION CENTRES -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- LEFT 2 COLUMNS: INCIDENTS TABLE -->
+            <div class="lg:col-span-2 bg-gray-800 p-6 rounded-lg border border-gray-700 flex flex-col">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                    <h2 class="text-xl font-semibold text-gray-200">Live Incident Stream</h2>
+                    <div class="flex items-center gap-2">
+                        <label for="severity-filter" class="text-sm text-gray-400">Filter Severity:</label>
+                        <select id="severity-filter" class="bg-gray-900 border border-gray-700 rounded px-3 py-1 text-sm focus:outline-none focus:border-blue-500">
+                            <option value="ALL">All Levels</option>
+                            <option value="Critical">Critical Only</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto flex-grow">
+                    <table class="min-w-full divide-y divide-gray-700 text-left text-sm">
+                        <thead class="bg-gray-900 text-gray-400 uppercase text-xs tracking-wider">
+                            <tr>
+                                <th class="p-3">ID</th>
+                                <th class="p-3">Location</th>
+                                <th class="p-3">Category</th>
+                                <th class="p-3">Severity</th>
+                                <th class="p-3">Reported Time</th>
+                                <th class="p-3">Response Team</th>
+                                <th class="p-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incident-table-body" class="divide-y divide-gray-700">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: EVACUATION CENTRES -->
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700 space-y-4">
+                <h2 class="text-xl font-semibold text-gray-200">Evacuation Logistics</h2>
+                <div id="centres-container" class="space-y-4">
+                    <!-- Injected dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER SIMULATED ACTIONS -->
+        <footer class="bg-gray-800 border-t border-gray-700 p-4 rounded-lg flex flex-wrap gap-4 justify-between items-center text-sm text-gray-400">
+            <div>System Context: Deployment v1.1.0 Stable Rollback Target ready.</div>
+            <div class="flex gap-2">
+                <button onclick="simulateUpdate()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded transition shadow">
+                    🔄 Run Logistics Simulation Step
+                </button>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // DATA MODEL FOR INCIDENTS
+        let incidents = [
+            { id: "INC-2026-01", location: "Sector 4 River Banks", category: "Flash Flood Breakout", severity: "Critical", time: "11:42 AM", team: "NDRF Team Alpha", status: "Open" },
+            { id: "INC-2026-02", location: "North Highway Junction", category: "Landslide Blockage", severity: "High", time: "12:05 PM", team: "SDRF Team Bravo", status: "Open" },
+            { id: "INC-2026-03", location: "Downtown Residential Block C", category: "Waterlogging / Grid Failure", severity: "Medium", time: "12:15 PM", team: "Civil Defense Unit 1", status: "Open" },
+            { id: "INC-2026-04", location: "Old Town Bridge Route", category: "Structural Compromise", severity: "Critical", time: "12:50 PM", team: "Unassigned - En Route", status: "Open" },
+            { id: "INC-2026-05", location: "Coastal Fishing Hamlet", category: "High Tide Surging", severity: "High", time: "01:10 PM", team: "Coast Guard Auxiliary", status: "Resolved" }
+        ];
+
+        // DATA MODEL FOR EVACUATION CENTRES
+        let evacuationCentres = [
+            { name: "District Model School Grounds", capacity: 500, occupancy: 465, supplyStatus: "Adequate Food/Water", medicineShortage: false },
+            { name: "St. Jude Community Hall", capacity: 300, occupancy: 285, supplyStatus: "Critical Water Shortage", medicineShortage: true },
+            { name: "Government Sports Complex Stadium", capacity: 1200, occupancy: 420, supplyStatus: "Adequate Medical/Dry Food", medicineShortage: false }
+        ];
+
+        const teamsAvailableCount = 4;
+
+        function updateClock() {
+            document.getElementById('live-clock').innerText = "Live Operations Time: " + new Date().toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function renderPortal() {
+            const filterValue = document.getElementById('severity-filter').value;
+            const tableBody = document.getElementById('incident-table-body');
+            tableBody.innerHTML = '';
+
+            let openCount = 0;
+            let resolvedCount = 0;
+            let replenishCount = 0;
+
+            // Compute counts
+            incidents.forEach(inc => {
+                if (inc.status === 'Open') openCount++;
+                if (inc.status === 'Resolved') resolvedCount++;
+            });
+
+            evacuationCentres.forEach(c => {
+                if (c.medicineShortage || c.supplyStatus.toLowerCase().includes('shortage')) {
+                    replenishCount++;
+                }
+            });
+
+            // Update Global Metrics Display
+            document.getElementById('stat-open').innerText = openCount;
+            document.getElementById('stat-resolved').innerText = resolvedCount;
+            document.getElementById('stat-teams').innerText = teamsAvailableCount;
+            document.getElementById('stat-replenish').innerText = replenishCount;
+
+            // Prioritize Incidents Array for table view & highest triage
+            const filteredIncidents = incidents.filter(inc => filterValue === 'ALL' || inc.severity === filterValue);
+
